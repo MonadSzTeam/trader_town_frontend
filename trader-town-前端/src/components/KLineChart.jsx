@@ -1,74 +1,143 @@
-import React from 'react';
-import { Play, Pause, RotateCcw, Settings, UserPlus } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createChart, ColorType } from 'lightweight-charts';
 
-const ControlBar = ({ isRunning, setIsRunning, speed, setSpeed, currentTime, onAddAgent }) => {
-  const formatTime = (date) => {
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+const KLineChart = ({ isRunning }) => {
+  const chartContainerRef = useRef();
+  const chartRef = useRef();
+  const seriesRef = useRef();
+  const [timeframe, setTimeframe] = useState('1m');
+
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    // 创建图表
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: '#1A2332' },
+        textColor: '#CCCCCC',
+      },
+      grid: {
+        vertLines: { color: '#2A5CAA', style: 2, visible: true },
+        horzLines: { color: '#2A5CAA', style: 2, visible: true },
+      },
+      crosshair: {
+        mode: 1,
+        vertLine: {
+          color: '#FFD700',
+          width: 1,
+          style: 2,
+        },
+        horzLine: {
+          color: '#FFD700',
+          width: 1,
+          style: 2,
+        },
+      },
+      rightPriceScale: {
+        borderColor: '#2A5CAA',
+      },
+      timeScale: {
+        borderColor: '#2A5CAA',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      width: chartContainerRef.current.clientWidth,
+      height: chartContainerRef.current.clientHeight || 360,
     });
-  };
+
+    // 创建K线系列
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: '#4CAF50',
+      downColor: '#F44336',
+      borderDownColor: '#F44336',
+      borderUpColor: '#4CAF50',
+      wickDownColor: '#F44336',
+      wickUpColor: '#4CAF50',
+    });
+
+    // 生成模拟数据
+    const generateKLineData = () => {
+      const data = [];
+      const basePrice = 45000;
+      let currentPrice = basePrice;
+      const now = Date.now();
+
+      for (let i = 0; i < 100; i++) {
+        const time = now - (100 - i) * 60 * 1000; // 每分钟一根K线
+        const change = (Math.random() - 0.5) * 1000;
+        const open = currentPrice;
+        const close = currentPrice + change;
+        const high = Math.max(open, close) + Math.random() * 200;
+        const low = Math.min(open, close) - Math.random() * 200;
+
+        data.push({
+          time: Math.floor(time / 1000),
+          open: parseFloat(open.toFixed(2)),
+          high: parseFloat(high.toFixed(2)),
+          low: parseFloat(low.toFixed(2)),
+          close: parseFloat(close.toFixed(2)),
+        });
+
+        currentPrice = close;
+      }
+      return data;
+    };
+
+    const initialData = generateKLineData();
+    candlestickSeries.setData(initialData);
+
+    chartRef.current = chart;
+    seriesRef.current = candlestickSeries;
+
+    // 实时更新数据
+    let lastPrice = initialData[initialData.length - 1].close;
+    const updateInterval = setInterval(() => {
+      if (isRunning) {
+        const change = (Math.random() - 0.5) * 200;
+        const newPrice = lastPrice + change;
+        const high = Math.max(lastPrice, newPrice) + Math.random() * 100;
+        const low = Math.min(lastPrice, newPrice) - Math.random() * 100;
+        
+        candlestickSeries.update({
+          time: Math.floor(Date.now() / 1000),
+          open: parseFloat(lastPrice.toFixed(2)),
+          high: parseFloat(high.toFixed(2)),
+          low: parseFloat(low.toFixed(2)),
+          close: parseFloat(newPrice.toFixed(2)),
+        });
+        
+        lastPrice = newPrice;
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(updateInterval);
+      if (chartRef.current) {
+        chartRef.current.remove();
+      }
+    };
+  }, [isRunning]);
 
   return (
-    <div className="h-20 bg-bg-dark border-b-2 border-tech-blue flex items-center justify-between px-6">
-      {/* 左侧Logo */}
-      <div className="flex items-center space-x-4">
-        <div className="w-8 h-8 bg-tech-blue pixel-element"></div>
-        <h1 className="pixel-font text-xl font-bold text-white">AI小镇交易大厅</h1>
-      </div>
-      
-      {/* 中部控制按钮 */}
-      <div className="flex items-center space-x-4">
-        <button 
-          onClick={() => setIsRunning(!isRunning)}
-          className="w-12 h-12 bg-tech-blue hover:bg-blue-600 rounded-lg flex items-center justify-center pixel-border glow transition-all"
-        >
-          {isRunning ? <Pause size={20} /> : <Play size={20} />}
-        </button>
-        
-        <button className="w-12 h-12 bg-pixel-olive hover:bg-green-600 rounded-lg flex items-center justify-center pixel-border transition-all">
-          <RotateCcw size={20} />
-        </button>
-        
-        {/* 添加Agent按钮 */}
-        <button 
-          onClick={onAddAgent}
-          className="h-12 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg flex items-center space-x-2 pixel-border glow transition-all"
-        >
-          <UserPlus size={20} />
-          <span className="pixel-font font-bold text-sm">添加Agent</span>
-        </button>
-      </div>
-      
-      {/* 右侧时间和速度 */}
-      <div className="flex items-center space-x-6">
-        <div className="text-text-light">
-          <div className="text-sm">当前时间</div>
-          <div className="pixel-font text-lg font-bold text-data-gold">
-            {formatTime(currentTime)}
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-text-light">速度:</span>
-          <input
-            type="range"
-            min="0.5"
-            max="5"
-            step="0.5"
-            value={speed}
-            onChange={(e) => setSpeed(parseFloat(e.target.value))}
-            className="w-20 accent-tech-blue"
-          />
-          <span className="text-sm text-data-gold pixel-font">{speed}x</span>
+    <div className="w-full h-full p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="pixel-font text-lg font-bold text-white">K线图</h3>
+        <div className="flex space-x-2">
+          <select 
+            value={timeframe} 
+            onChange={(e) => setTimeframe(e.target.value)}
+            className="bg-bg-dark border border-tech-blue text-text-light pixel-font text-xs px-2 py-1"
+          >
+            <option value="1m">1分钟</option>
+            <option value="5m">5分钟</option>
+            <option value="15m">15分钟</option>
+            <option value="1h">1小时</option>
+          </select>
         </div>
       </div>
+      <div ref={chartContainerRef} className="w-full flex-1" style={{ height: 'calc(100% - 40px)' }}></div>
     </div>
   );
 };
 
-export default ControlBar;
+export default KLineChart;

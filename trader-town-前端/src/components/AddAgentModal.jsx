@@ -92,4 +92,69 @@ const AddAgentModal = ({ onClose, onConfirm }) => {
                   agentType === 'value' 
                     ? `${agentStyles.value.bgColor} ${agentStyles.value.borderColor} glow` 
                     : 'bg-bg-darker border-gray-600 hover:border-green-400'
+                }`}
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className={agentStyles.value.textColor}>
+                    {agentStyles.value.icon}
+                  </div>
+                  <div className={`pixel-font font-bold text-sm ${
+                    agentType === 'value' ? 'text-white' : agentStyles.value.textColor
+                  }`}>
+                    价值型
+                  </div>
+                  <div className="text-xs text-text-light text-center">
+                    {agentStyles.value.description}
+                  </div>
+                </div>
+              </div>
+              
+              {/* 赌徒风格 */}
+              <div 
+                onClick={() => setAgentType('gambler')}
+                className={`cursor-pointer p-4 rounded-lg border-2 transition-all ${
+                  agentType === 'gambler' 
+                    ? `${agentStyles.gambler.bgColor} ${agentStyles.gambler.borderColor} glow` 
+                    : 'bg-bg-darker border-gray-600 hover:border-red-400'
+                }`}
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <div className={agentStyles.gambler.textColor}>
+                    {agentStyles.gambler.icon}
+                  </div>
+                  <div className={`pixel-font font-bold text-sm ${
+                    agentType === 'gambler' ? 'text-white' : agentStyles.gambler.textColor
+                  }`}>
+                    赌徒型
+                  </div>
+                  <div className="text-xs text-text-light text-center">
+                    {agentStyles.gambler.description}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* 提交按钮 */}
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg pixel-font font-bold text-white transition-colors"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg pixel-font font-bold text-white transition-all glow"
+            >
+              创建Agent
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default AddAgentModal;

@@ -68,4 +68,75 @@ const App = () => {
     }));
     setShowAddModal(false);
   };
+
+  useEffect(() => {
+    if (!isRunning) return;
+    
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000 / speed);
+    
+    return () => clearInterval(timeInterval);
+  }, [isRunning, speed]);
+
+  return (
+    <div className="h-screen w-screen bg-bg-dark flex flex-col overflow-hidden">
+      {/* 顶部控制栏 */}
+      <ControlBar 
+        isRunning={isRunning}
+        setIsRunning={setIsRunning}
+        speed={speed}
+        setSpeed={setSpeed}
+        currentTime={currentTime}
+        onAddAgent={() => setShowAddModal(true)}
+      />
+      
+      {/* 主内容区域 */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* 左侧：交易大厅 */}
+        <div className="flex-1 flex flex-col">
+          <TradingHall 
+            isRunning={isRunning}
+            agents={allAgents}
+            setAgents={setAllAgents}
+          />
+        </div>
+        
+        {/* 右侧：数据面板 */}
+        <div className="w-96 bg-bg-dark border-l-2 border-tech-blue flex flex-col">
+          {/* K线图 */}
+          <div className="h-80 border-b-2 border-tech-blue">
+            <KLineChart isRunning={isRunning} />
+          </div>
+          
+          {/* 盈利面板 */}
+          <div className="flex-1 border-b-2 border-tech-blue">
+            <ProfitBoard agents={allAgents} />
+          </div>
+          
+          {/* 统计面板 */}
+          <div className="h-64">
+            <StatsPanel tradingData={tradingData} />
+          </div>
+        </div>
+      </div>
+      
+      {/* 底部状态栏 */}
+      <StatusBar 
+        isRunning={isRunning}
+        currentTime={currentTime}
+        agents={allAgents}
+      />
+      
+      {/* 添加Agent模态框 */}
+      {showAddModal && (
+        <AddAgentModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddAgent}
+        />
+      )}
+    </div>
+  );
+};
+
 export default App;

@@ -96,4 +96,8 @@ const AIAgent = ({ agent, isMoving }) => {
           <div className="w-full h-full bg-yellow-500 rounded-full animate-pulse"></div>
         )}
       </div>
+    </div>
+  );
+};
+
 export default AIAgent;

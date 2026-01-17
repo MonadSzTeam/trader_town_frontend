@@ -90,4 +90,69 @@ const TradingHall = ({ isRunning, agents, setAgents }) => {
             '稳扎稳打才是王道',
             '价值为王',
             '耐心等待机会'
+          ];
+          message = valueMessages[Math.floor(Math.random() * valueMessages.length)];
+          bgColor = 'bg-green-600';
+          textColor = 'text-green-100';
+        }
+        
+        return {
+          id: agent.id,
+          x: agent.x,
+          y: agent.y - 30,
+          message,
+          bgColor,
+          textColor
+        };
+      });
+      
+      setChatBubbles(newChatBubbles);
+      
+      // 5秒后清除聊天气泡
+      setTimeout(() => {
+        setChatBubbles([]);
+      }, 5000);
+    };
+    
+    // 立即开始第一轮聊天
+    startChatCycle();
+    
+    // 每5秒循环一次
+    const chatInterval = setInterval(startChatCycle, 5000);
+    
+    return () => {
+      clearInterval(moveInterval);
+      clearInterval(chatInterval);
+    };
+  }, [isRunning, agents, setAgents]);
+
+  return (
+    <div className="relative w-full h-full bg-gradient-to-b from-bg-dark to-bg-darker overflow-hidden">
+      {/* 交易大厅背景 */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="grid grid-cols-8 grid-rows-8 h-full w-full">
+          {Array.from({ length: 64 }).map((_, i) => (
+            <div key={i} className="border border-tech-blue/20"></div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Agent */}
+      {agents.map(agent => (
+        <AIAgent key={agent.id} agent={agent} />
+      ))}
+      
+      {/* 交易气泡 */}
+      {bubbles.map(bubble => (
+        <TradingBubble key={bubble.id} bubble={bubble} />
+      ))}
+      
+      {/* 聊天气泡 */}
+      {chatBubbles.map(bubble => (
+        <ChatBubble key={bubble.id} bubble={bubble} />
+      ))}
+    </div>
+  );
+};
+
 export default TradingHall;
