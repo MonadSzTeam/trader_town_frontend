@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Trader Town 像素交易大厅</title>
+  <style>
+    body{margin:0;background:#111;color:#fff;font-family:Arial}
+    #game{width:640px;height:360px;margin:0 auto;background:#222;border:2px solid #444}
+    #panel{width:640px;margin:10px auto;display:flex;gap:10px}
+    .box{flex:1;background:#222;border:1px solid #444;padding:8px}
+  </style>
+</head>
+<body>
+
+<h2 style="text-align:center">像素交易大厅（网页版）</h2>
+<div id="game"></div>
+
+<div id="panel">
+  <div class="box">
+    <h4>K 线（实时 Mock）</h4>
+    <canvas id="kline" width="320" height="180"></canvas>
+  </div>
+  <div class="box">
+    <h4>收益排行</h4>
+    <div id="rank">加载中...</div>
+  </div>
+</div>
+
+<!-- 1. 轻量 K 线库 -->
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<!-- 2. Phaser 像素引擎 -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.85.2/dist/phaser.min.js"></script>
+
+<script>
+/* ====== 像素大厅（Phaser） ====== */
+const config = {
+  type: Phaser.AUTO,
+  parent: 'game',
+  width: 640,
+  height: 360,
+  pixelArt: true,
+  backgroundColor: '#222222',
+  scene: {
+    preload,
+    create
+  }
+};
+let bubbles = {};
+
+function preload() {
+  // 用开源 16×16 像素图
+  this.load.image('hank','https://raw.githubusercontent.com/MonadSzTeam/trader_town_frontend/main/sprites/hank.png');
+  this.load.image('bean','https://raw.githubusercontent.com/MonadSzTeam/trader_town_frontend/main/sprites/bean.png');
+}
+function create() {
+  // 地板
+  this.add.rectangle(320, 340, 640, 40, 0x444444);
+  // 生成小人
+  ['hank','bean'].forEach((name,i)=>{
+    const x = 180 + i*280;
+    const y = 260;
+    this.add.sprite(x,y,name);
+    bubbles[name] = this.add.text(x-30,y-40,'',{fontSize:'14px',color:'#fff',backgroundColor:'#000000aa',padding:{x:4,y:2}});
+    bubbles[name].setAlpha(0);
+  });
+  // 每秒气泡
+  setInterval(()=>showBubble(),1000);
+}
+function showBubble(){
+  const names = ['hank','bean'];
+  const msgs  = ['我看好 $MON，加仓！','先止盈，下次再来~'];
+  const idx   = Math.floor(Math.random()*names.length);
+  const bubble= bubbles[names[idx]];
+  if(!bubble) return;
+  bubble.setText(msgs[idx]);
+  bubble.setAlpha(1);
+  setTimeout(()=>bubble.setAlpha(0),3000);
+}
+
+new Phaser.Game(config);
+
+/* ====== K 线（ lightweight-charts ） ====== */
+const chart = LightweightCharts.createChart(document.getElementById('kline'),{width:320,height:180,timeScale:{visible:false}});
+const series = chart.addCandlestickSeries();
+const bars = [];
+let price = 1000;
+for(let i=0;i<60;i++){
+  const open = price;
+  const close = open + (Math.random()-0.5)*20;
+  const high = Math.max(open,close)+Math.random()*5;
+  const low  = Math.min(open,close)-Math.random()*5;
+  bars.push({time:i,open,high,low,close});
+  price = close;
+}
+series.setData(bars);
+
+/* ====== 排行（Mock） ====== */
+const rankDiv = document.getElementById('rank');
+function refreshRank(){
+  const list = [
+    {name:'Hank',pnl: (Math.random()*0.2-0.1)},
+    {name:'Bean',pnl: (Math.random()*0.2-0.1)}
+  ];
+  rankDiv.innerHTML = list.map(r=>`${r.name}: ${(r.pnl*100).toFixed(2)} %`).join('<br>');
+}
+refreshRank();
+setInterval(refreshRank,1000);
+</script>
+
+</body>
+</html>
